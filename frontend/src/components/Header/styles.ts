@@ -2,7 +2,7 @@ import styled from "styled-components";
 import { colors } from "../../styles/GlobalStyle";
 
 export const SHeader = styled.header`
-  background-color: ${colors.background} 
+  background-color: ${colors.background} ;
   padding: 0.2rem;
   display: flex;
   justify-content: space-between;
@@ -65,7 +65,7 @@ export const SHeader = styled.header`
       }
 
       label {
-        margin-lef: 0.5rem;
+        margin-left: 0.5rem;
         border: 0.18rem solid ${colors.black};
         width: 2.5rem;
         height: 2.5rem;

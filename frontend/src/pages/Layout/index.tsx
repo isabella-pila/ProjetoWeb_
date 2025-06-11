@@ -1,16 +1,14 @@
 // src/pages/Layout/index.tsx
-import { Header } from "../../components/Header";
 import { Footer } from "../../components/Footer";
+import { SMain } from "./styles";
+import { Outlet } from "react-router-dom";
 
-interface LayoutProps {
-  children: React.ReactNode;
-}
-
-export function Layout({ children }: LayoutProps) {
+export function Layout() {
   return (
     <>
-      <Header />
-      <main>{children}</main>
+      <SMain>
+        <Outlet />
+      </SMain>
       <Footer />
     </>
   );

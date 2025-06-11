@@ -13,8 +13,9 @@ export function Header({ onSearchChange }: HeaderProps) {
 
   return (
     <SHeader>
-      <div>
+      <div><Link to="/">
         <img src="/src/assets/logo.png" alt="Pet Fit Logo" />
+        </Link>
         <h1>Pet Fit</h1>
       </div>
 

@@ -1,6 +1,5 @@
 // src/routes/RouteWeb.tsx
-import { Routes, Route, Outlet } from "react-router-dom";
-import { AuthProvider } from "../contexts/AuthContext";
+import { Routes, Route } from "react-router-dom";
 import { Login } from "../pages/Login";
 import { RegisterPage } from "../pages/Register";
 import { HomePage } from "../pages/HomePage";
@@ -8,24 +7,14 @@ import RecipePage  from "../pages/RecipePage";
 import { NotFoundPage } from "../pages/NotFoundPage";
 import { ProtectedRoute } from "./ProtectedRoute"; // Corrigido o nome do arquivo
 import { SavedRecipes } from "../pages/SaveRecipe";
-import { Footer } from "../components/Footer";
+
+import { Layout } from "../pages/Layout";
 
 
-function AppLayout() {
-  return (
-    <AuthProvider>
-       {/* Você pode remover esse prop se não precisar */}
-      <main>
-        <Outlet />
-      </main>
-      <Footer />
-    </AuthProvider>
-  );
-}
 export function RouteWeb() {
   return (
     <Routes>
-      <Route path="/" element={<AppLayout />}>
+      <Route path="/" element={<Layout />}>
         <Route index element={<HomePage />} />
         <Route path="recipe/:recipeId" element={<RecipePage />} />
         <Route path="login" element={<Login />} />
