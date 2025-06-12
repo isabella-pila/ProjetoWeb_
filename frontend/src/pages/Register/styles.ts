@@ -1,11 +1,27 @@
-
 import styled from "styled-components"
 import { colors } from "../../styles/GlobalStyle"
 
 export const Container = styled.div`
-  max-width: 400px;
   margin: 0 auto;
   padding: 2rem;
+  justify-items: center;
+  background-color: #ffffff;
+  border-radius: 2rem;
+  box-shadow: 10px 10px 20px #8d8b8b;
+  height: 90vh;
+  width: 40vw;
+  margin-top: 5%;
+
+  @media (max-width: 1024px) {
+    width: 60vw;
+    height: auto;
+  }
+
+  @media (max-width: 768px) {
+    width: 90vw;
+    height: auto;
+    padding: 1rem;
+  }
 `
 
 export const Title = styled.h1`
@@ -13,6 +29,10 @@ export const Title = styled.h1`
   margin-bottom: 2rem;
   color: ${colors.text};
   text-align: center;
+
+  @media (max-width: 768px) {
+    font-size: 1.5rem;
+  }
 `
 
 export const Form = styled.form`
@@ -36,6 +56,16 @@ export const Input = styled.input`
   border: 1px solid ${colors.primary};
   border-radius: 4px;
   font-family: Itim;
+  width: 30vw;
+  background-color: ${colors.boxtext};
+
+  @media (max-width: 1024px) {
+    width: 50vw;
+  }
+
+  @media (max-width: 768px) {
+    width: 100%;
+  }
 `
 
 export const Button = styled.button`
@@ -47,13 +77,12 @@ export const Button = styled.button`
   cursor: pointer;
   font-weight: bold;
   margin-top: 1rem;
-  
+
   &:hover {
     background-color: ${colors.boxtext};
-    color: ${colors.black}
-    
+    color: ${colors.black};
   }
-  
+
   &:disabled {
     background-color: ${colors.primary};
     cursor: not-allowed;
@@ -71,11 +100,11 @@ export const ErrorMessage = styled.div`
 export const LoginLink = styled.p`
   text-align: center;
   margin-top: 1.5rem;
-  
+
   a {
     color: ${colors.primary};
     text-decoration: none;
-    
+
     &:hover {
       text-decoration: underline;
     }

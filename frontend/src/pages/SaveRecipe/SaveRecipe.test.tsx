@@ -1,91 +1,134 @@
-import { describe, it, expect, vi } from 'vitest';
-import { render, screen, within } from '@testing-library/react';
+// Arquivo: src/pages/SavedRecipes/SavedRecipes.test.tsx
+
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { BrowserRouter } from 'react-router-dom';
 import { SavedRecipes } from './';
 
-// --- MOCK DAS DEPENDÊNCIAS ---
+// --- MOCKS ---
 
-// Mock dos componentes filhos para isolar o teste na lógica da página
-vi.mock('../../components/Header', () => ({ Header: () => <header data-testid="header-mock" /> }));
-
-vi.mock('../../components/HighLight', () => ({
-  HighLight: ({ title }: { title: string }) => <article>{title}</article>,
+// Mock dos componentes filhos para isolar o teste na página SavedRecipes
+vi.mock('../../components/Header', () => ({
+  Header: () => <header>Header Mock</header>,
 }));
 
+vi.mock('../../components/HighLight', () => ({
+  // O HighLight recebe 'title', então vamos garantir que ele o exiba
+  // para que possamos encontrá-lo nos testes.
+  HighLight: ({ title }: { title: string }) => <div>{title}</div>,
+}));
+
+// Mock do nosso componente de botão para garantir que o onClick funcione
 vi.mock('../../components/Button', () => ({
-  Button: ({ onClick, children }: { onClick: () => void, children: React.ReactNode }) => (
-    <button onClick={onClick}>{children}</button>
+  Button: ({ children, onClick, ...props }: any) => (
+    <button onClick={onClick} {...props}>
+      {children}
+    </button>
   ),
 }));
 
-// Mock do array de receitas.
-// Definimos os dados diretamente dentro do mock para evitar erros de "hoisting".
+// Mock do hook de autenticação, que é a dependência mais importante
+const mockSetUserName = vi.fn();
+vi.mock('../../hooks/userAuth', () => ({
+  useAuth: () => ({
+    currentUser: { name: 'Usuário Padrão' },
+    setUserName: mockSetUserName,
+  }),
+}));
+
+// Mock do array de receitas para ter dados consistentes
 vi.mock('../../mocks/savedRecipesMock', () => ({
   savedRecipesMock: [
-    { id: '1', title: 'Bolo de Cenoura para Pets', saved: true, image: 'bolo.jpg' },
-    { id: '2', title: 'Biscoito de Atum para Gatos', saved: true, image: 'biscoito.jpg' },
-    { id: '3', title: 'Petisco de Maçã', saved: false, image: 'maca.jpg' },
+    { id: '1', title: 'Bolo de Cenoura Fofinho', saved: true, image: 'bolo.jpg' },
+    { id: '2', title: 'Frango Grelhado com Limão', saved: true, image: 'frango.jpg' },
+    { id: '3', title: 'Torta de Maçã', saved: false, image: 'torta.jpg' },
   ],
 }));
 
-// --- SUÍTE DE TESTES ---
+// --- TESTES ---
+
 describe('Página: SavedRecipes', () => {
+  beforeEach(() => {
+    // Limpa os mocks antes de cada teste para não haver interferência
+    vi.clearAllMocks();
+  });
 
-  it('deve renderizar apenas as receitas salvas ao carregar a página', () => {
-    // ARRANGE
+  it('deve renderizar o nome do usuário e as receitas salvas corretamente', () => {
     render(<SavedRecipes />, { wrapper: BrowserRouter });
 
-    // ASSERT
+    // Verifica o título da página
     expect(screen.getByRole('heading', { name: /receitas salvas/i })).toBeInTheDocument();
-    
-    expect(screen.getByText('Bolo de Cenoura para Pets')).toBeInTheDocument();
-    expect(screen.getByText('Biscoito de Atum para Gatos')).toBeInTheDocument();
-    
-    expect(screen.queryByText('Petisco de Maçã')).toBeNull();
+
+    // Procura pelo elemento <p> que contém a saudação completa.
+    // Esta é a correção para o texto quebrado pela tag <strong>
+    const greeting = screen.getByText((content, element) => {
+      return element.textContent === 'Olá, Usuário Padrão!';
+    });
+    expect(greeting).toBeInTheDocument();
+
+    // Verifica se as receitas marcadas como 'saved: true' no mock são renderizadas
+    expect(screen.getByText('Bolo de Cenoura Fofinho')).toBeInTheDocument();
+    expect(screen.getByText('Frango Grelhado com Limão')).toBeInTheDocument();
+
+    // Verifica que a receita não salva não foi renderizada
+    expect(screen.queryByText('Torta de Maçã')).not.toBeInTheDocument();
   });
 
-  it('deve remover uma receita da lista quando o botão "Remover" for clicado', async () => {
-    // ARRANGE
+  it('deve remover uma receita da lista ao clicar em "Remover"', async () => {
     const user = userEvent.setup();
     render(<SavedRecipes />, { wrapper: BrowserRouter });
 
-    const recipeCard1 = screen.getByText('Bolo de Cenoura para Pets').closest('.recipe-card');
-    expect(recipeCard1).toBeInTheDocument();
+    // Garante que a receita existe antes de ser removida
+    expect(screen.getByText('Bolo de Cenoura Fofinho')).toBeInTheDocument();
 
-    // Garante que o teste falhe de forma clara se o card não for encontrado
-    if (!recipeCard1) throw new Error("Card da receita não encontrado");
+    // Encontra todos os botões de remover e clica no primeiro
+    const removeButtons = screen.getAllByRole('button', { name: /remover/i });
+    await user.click(removeButtons[0]);
 
-    // AQUI ESTÁ A CORREÇÃO: Usamos 'as HTMLElement' para dizer ao TypeScript
-    // que 'recipeCard1' é um elemento HTML específico.
-    const removeButton = within(recipeCard1 as HTMLElement).getByRole('button', { name: /remover/i });
-
-    // ACT
-    await user.click(removeButton);
-
-    // ASSERT
-    expect(screen.queryByText('Bolo de Cenoura para Pets')).toBeNull();
-    expect(screen.getByText('Biscoito de Atum para Gatos')).toBeInTheDocument();
+    // Espera a UI atualizar e verifica se a receita foi removida da tela
+    await waitFor(() => {
+      expect(screen.queryByText('Bolo de Cenoura Fofinho')).not.toBeInTheDocument();
+    });
   });
 
-  it('deve exibir a mensagem de "nenhuma receita" quando todas forem removidas', async () => {
-    // ARRANGE
+  it('deve permitir que o usuário edite e salve um novo nome', async () => {
     const user = userEvent.setup();
     render(<SavedRecipes />, { wrapper: BrowserRouter });
 
-    // ACT 1: Remove a primeira receita
-    const recipeCard1 = screen.getByText('Bolo de Cenoura para Pets').closest('.recipe-card');
-    if (!recipeCard1) throw new Error("Card 1 não encontrado");
-    const removeButton1 = within(recipeCard1 as HTMLElement).getByRole('button', { name: /remover/i });
-    await user.click(removeButton1);
+    // 1. Clica no botão para entrar no modo de edição
+    await user.click(screen.getByRole('button', { name: /editar nome/i }));
 
-    // ACT 2: Remove a segunda receita
-    const recipeCard2 = screen.getByText('Biscoito de Atum para Gatos').closest('.recipe-card');
-    if (!recipeCard2) throw new Error("Card 2 não encontrado");
-    const removeButton2 = within(recipeCard2 as HTMLElement).getByRole('button', { name: /remover/i });
-    await user.click(removeButton2);
+    // 2. Verifica se o campo de input apareceu
+    const input = screen.getByRole('textbox');
+    expect(input).toBeInTheDocument();
 
-    // ASSERT: Agora que a lista está vazia, a mensagem deve aparecer
-    expect(screen.getByText('Você ainda não salvou nenhuma receita')).toBeInTheDocument();
+    // 3. Limpa o campo e digita um novo nome
+    await user.clear(input);
+    await user.type(input, 'Novo Nome do Usuário');
+
+    // 4. Clica em salvar
+    await user.click(screen.getByRole('button', { name: /salvar/i }));
+
+    // 5. Verifica se a função setUserName do hook foi chamada com o valor correto
+    expect(mockSetUserName).toHaveBeenCalledWith('Novo Nome do Usuário');
+
+    // 6. Verifica se a UI voltou ao modo de exibição (o input sumiu)
+    await waitFor(() => {
+      expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
+    });
+  });
+
+  it('deve exibir uma mensagem de estado vazio quando não houver receitas', async () => {
+    const user = userEvent.setup();
+    render(<SavedRecipes />, { wrapper: BrowserRouter });
+
+    // Remove todas as receitas da tela
+    const removeButtons = screen.getAllByRole('button', { name: /remover/i });
+    await user.click(removeButtons[0]);
+    await user.click(removeButtons[1]);
+
+    // Verifica se a mensagem de "nenhuma receita" é exibida
+    expect(await screen.findByText(/você ainda não salvou nenhuma receita/i)).toBeInTheDocument();
   });
 });

@@ -1,67 +1,80 @@
-"use client"
+"use client";
 
-import { createContext, useState, useEffect, type ReactNode, useContext } from "react"
-import type { UserProps } from "../types/UserType"
-import { mockUsers } from "../mocks/UserMock"
+import {
+  createContext,
+  useState,
+  useEffect,
+  type ReactNode,
+  useContext,
+} from "react";
+import type { UserProps } from "../types/UserType";
+import { mockUsers } from "../mocks/UserMock";
 
+// Tipagem do contexto
 export interface AuthContextType {
-  currentUser: UserProps | null
-  isLoading: boolean
-  login: (email: string, password:string) => Promise<void>
-  register: (name: string, email: string, password: string) => Promise<void>
-  logout: () => void
+  currentUser: UserProps | null;
+  isLoading: boolean;
+  login: (email: string, password: string) => Promise<void>;
+  register: (name: string, email: string, password: string) => Promise<void>;
+  logout: () => void;
+  setUserName: (name: string) => void; // ✅ função para alterar o nome
 }
 
-// --- ALTERAÇÃO AQUI ---
-// O valor padrão agora é null e o tipo foi ajustado para aceitar null.
-// Isso garante que o hook 'useAuth' possa verificar se está fora do provider.
-export const AuthContext = createContext<AuthContextType | null>(null)
+// Criação do contexto com valor inicial null
+export const AuthContext = createContext<AuthContextType | null>(null);
 
 interface AuthProviderProps {
-  children: ReactNode
+  children: ReactNode;
 }
 
 export const AuthProvider = ({ children }: AuthProviderProps) => {
-  const [currentUser, setCurrentUser] = useState<UserProps | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
+  const [currentUser, setCurrentUser] = useState<UserProps | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
+  // Carregar o usuário do localStorage ao iniciar
   useEffect(() => {
-    // Check if user is stored in localStorage
-    const storedUser = localStorage.getItem("currentUser")
+    const storedUser = localStorage.getItem("currentUser");
     if (storedUser) {
-      setCurrentUser(JSON.parse(storedUser))
+      setCurrentUser(JSON.parse(storedUser));
     }
-    setIsLoading(false)
-  }, [])
+    setIsLoading(false);
+  }, []);
 
+  // Função de login
   const login = async (email: string, password: string) => {
-    // Simula chamada de API
     return new Promise<void>((resolve, reject) => {
       setTimeout(() => {
-        const user = mockUsers.find((u) => u.email === email && u.password === password)
+        const user = mockUsers.find(
+          (u) => u.email === email && u.password === password
+        );
 
         if (user) {
-          // Remove password before storing
-          // eslint-disable-next-line @typescript-eslint/no-unused-vars
-          const { password, ...userWithoutPassword } = user
-          setCurrentUser(userWithoutPassword)
-          localStorage.setItem("currentUser", JSON.stringify(userWithoutPassword))
-          resolve()
+          const { password: _, ...userWithoutPassword } = user;
+          setCurrentUser(userWithoutPassword);
+          localStorage.setItem(
+            "currentUser",
+            JSON.stringify(userWithoutPassword)
+          );
+          resolve();
         } else {
-          reject(new Error("Invalid email or password"))
+          reject(new Error("Email ou senha inválidos"));
         }
-      }, 500)
-    })
-  }
+      }, 500);
+    });
+  };
 
-  const register = async (name: string, email: string, password: string) => {
-    // Simula chamada de API
+  // Função de registro
+  const register = async (
+    name: string,
+    email: string,
+    password: string
+  ) => {
     return new Promise<void>((resolve, reject) => {
       setTimeout(() => {
-        const existingUser = mockUsers.find((u) => u.email === email)
+        const existingUser = mockUsers.find((u) => u.email === email);
 
         if (existingUser) {
-          reject(new Error("Email already in use"))
+          reject(new Error("Email já cadastrado"));
         } else {
           const newUser: UserProps = {
             id: `user-${Date.now()}`,
@@ -69,26 +82,37 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
             email,
             password,
             role: "user",
-          }
+          };
 
-          // Em um aplicativo real, você enviaria isso para uma API
-          mockUsers.push(newUser)
+          mockUsers.push(newUser);
 
-          // Remove password antes de armazenar
-          // eslint-disable-next-line @typescript-eslint/no-unused-vars
-          const { password: _, ...userWithoutPassword } = newUser
-          setCurrentUser(userWithoutPassword)
-          localStorage.setItem("currentUser", JSON.stringify(userWithoutPassword))
-          resolve()
+          const { password: _, ...userWithoutPassword } = newUser;
+          setCurrentUser(userWithoutPassword);
+          localStorage.setItem(
+            "currentUser",
+            JSON.stringify(userWithoutPassword)
+          );
+          resolve();
         }
-      }, 500)
-    })
-  }
+      }, 500);
+    });
+  };
 
+  // ✅ Função para atualizar o nome do usuário
+  const setUserName = (name: string) => {
+    setCurrentUser((prev) => {
+      if (!prev) return prev;
+      const updatedUser = { ...prev, name };
+      localStorage.setItem("currentUser", JSON.stringify(updatedUser));
+      return updatedUser;
+    });
+  };
+
+  // Logout
   const logout = () => {
-    setCurrentUser(null)
-    localStorage.removeItem("currentUser")
-  }
+    setCurrentUser(null);
+    localStorage.removeItem("currentUser");
+  };
 
   return (
     <AuthContext.Provider
@@ -98,16 +122,17 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         login,
         register,
         logout,
+        setUserName, // ✅ incluído no contexto
       }}
     >
       {children}
     </AuthContext.Provider>
-  )
-}
+  );
+};
 
+// Hook personalizado para acessar o contexto
 export function useAuth() {
   const context = useContext(AuthContext);
-  // Agora esta verificação funciona corretamente!
   if (!context) {
     throw new Error("useAuth deve ser usado com AuthProvider");
   }

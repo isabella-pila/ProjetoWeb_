@@ -8,7 +8,8 @@ export const SHighLight = styled.section`
   height: 45vh;
   width: 25vw;
   margin: 2%;
-  margin-left:1rem;
+  margin-left: 1rem;
+  transition: transform 0.3s ease, filter 0.3s ease;
 
   &:hover {
     transform: scale(1.03);
@@ -26,13 +27,44 @@ export const SHighLight = styled.section`
   }
 
   img {
-    height: 30vh;
+    height: auto;
     width: 20vw;
     background-color: transparent;
     margin-top: 5%;
+    max-width: 100%;
   }
 
   h3 {
     background-color: transparent;
+  }
+
+  /* Responsividade */
+
+  @media (max-width: 1024px) {
+    width: 40vw;
+
+    img {
+      width: 35vw;
+    }
+  }
+
+  @media (max-width: 768px) {
+    width: 60vw;
+
+    img {
+      width: 55vw;
+    }
+  }
+
+  @media (max-width: 480px) {
+    width: 90vw;
+    height: auto;
+    margin-left: 0.5rem;
+    margin-right: 0.5rem;
+
+    img {
+      width: 85vw;
+      margin-top: 2%;
+    }
   }
 `;
